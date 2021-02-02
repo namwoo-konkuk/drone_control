@@ -41,7 +41,7 @@ Gazebo 9
 다음으로는 시뮬레이션에 대한 패키지들을 설치한다.
 
 ```
->> sudo apt-get install ant protobuf-compiler libeigen3-dev libopencv-dev openjdk-7-jdk openjdk-7-jre clang-3.5 lldb-3.5 -y
+>> sudo apt-get install ant protobuf-compiler libeigen3-dev libopencv-dev openjdk-8-jdk openjdk-8-jre clang lldb -y
 ```
 
 Pixhawk를 실제로 사용한다면 추가적인 작업이 필요하다. 
