@@ -94,7 +94,8 @@ git clone https://github.com/PX4/Firmware.git  git clone https://github.com/PX4/
 - **[Dropix](https://docs.px4.io/master/en/flight_controller/dropix.html)**:	`make	px4_fmu-v2_default`
 
 (버전이 올라가면서 posix라는 명령어는 사라지고 px4_sitl_default를 사용하라고 한다.)
-
+(recipe for target 'gazebo' failed 에러가 발생하는 경우에 다음의 패키지를 설치한다.
+sudo apt install libgstreamer1.0-dev)
 ```
 >>> make px4fmu-v2_default>>> make posix_sitl_default
 ```
