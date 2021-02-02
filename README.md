@@ -35,8 +35,7 @@ Gazebo 9
 우선, Pixhawk에 대한 패키지들을 설치한다.
 
 ```
->> sudo add-apt-repository ppa:george-edison55/cmake-3.x -y
->> sudo apt-get update>> sudo apt-get install python-argparse git-core wget zip  python-empy qtcreator cmake build-essential genromfs -y
+>> sudo apt-get install python-argparse git-core wget zip  python-empy qtcreator cmake build-essential genromfs -y
 ```
 
 다음으로는 시뮬레이션에 대한 패키지들을 설치한다.
