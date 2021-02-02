@@ -182,3 +182,96 @@ NuttX에 대한 설정들이 포함되어 있다. Pixhawk는 기본적으로 Ser
 **Unittests**
 
 말 그대로 Unit test를 하기 위한 코드들이 존재한다.
+
+
+
+
+## **MAVROS**
+
+SITL에서 roslaunch를 통해 실행되는 노드는 mavros와 pub_setpoints_position인데,
+처음 roscore를 실행시키고 두 노드를 실행시키면 roscore를 통해 publish와 subscribe을 하게 된다. pub_setpoints_position에 있는 명령들을 publish하면 mavros가 subscribe하고 그 내용을 PX4에 전달한다. 또한, mavros 노드가 PX4의 topic들을 subscribe하기 때문에 센서, 속도, 위치 등을 모니터링 할 수 있게 된다. 
+
+MAVROS/MAVLink 설치 방법은 공식 홈페이지를 참고한다.
+
+(가장 먼저 MAVROS/MAVLink가 포함된 workspace를 만드는 것이 안정적이다.) 
+
+(또한 catkin_make와 catkin build는 섞어서 사용이 불가능한 것 같다. Catkin build가 모듈을 개별적으로  uild가 가능하기 때문에 catkin build를 사용하는 것이 더 유용하다고 생각한다.)
+
+[https://docs.px4.io/master/en/ros/mavros_installation.html](https://docs.px4.io/master/en/ros/mavros_installation.html)
+
+그 후에 github에서 MAVROS test를 위해 clone한다.
+
+```
+$ cd ~/catkin_ws/src$ git clone https://github.com/Jaeyoung-Lim/modudculab_ros.git$ catkin build modudculab_ros$ source home/nile/catkin_ws/devel/setup.bash
+```
+
+다음으로 위와 같이 빌드를 진행하면 되는데, 빌드가 잘 되지 않을 것이다.
+(modudculab_ros/CmakeLists.txt 파일의 mavros dependency를 추가해야 하기 때문이다.)
+
+**gedit modudculab_ros/CMakeLists.txt # add mavros_msgs**
+
+find_package(catkin REQUIRED COMPONENTS
+
+roscpp
+
+rospy
+
+std_msgs
+
+mavros_msgs
+
+)
+
+**gedit modudculab_ros/package.xml # add mavros_msgs**
+
+<buildtool_depend>catkin</buildtool_depend>
+
+<build_depend>roscpp</build_depend>
+
+<build_depend>rospy</build_depend>
+
+<build_depend>std_msgs</build_depend>
+
+<build_depend>mavros_msgs</build_depend>
+
+<run_depend>roscpp</run_depend>
+
+<run_depend>rospy</run_depend>
+
+<run_depend>std_msgs</run_depend>
+
+<run_depend>mavros_msgs</run_depend>
+
+만약, 빌드를 마쳤다면 make px4_sitl_default gazebo를 실행시키고 roslaunch파일을 실행시킨다.
+
+(하지만 정상적으로 실행되지 않는데 이는 launch파일을 수정해줘야 한다.)
+
+**gedit modudculab_ros/launch/ctrl_pos_gazebo.launch**
+
+<arg name="fcu_url" default= "udp://:14540@127.0.0.1:14557">
+
+<!-- <arg name="fcu_url" default= "/dev/ttyUSB0:921600" /> -->
+
+```
+$ roscore$ roslaunch modudculab_ros ctrl_pos_gazebo.launch$ rosrun mavros mavsafety arm$ rosrun mavros mavsys mode -c OFFBOARD
+```
+
+이를 마치면, 드론의 호버링을 확인할 수 있다.
+
+## **MAVLink**
+
+SITL 파트에서 보았듯이 Pixhawk, Gazebo, QGroundControl은 MAVLink 메세지를 통해 UDP통신을 한다. TCP/IP는 상대방과 페어링이 되어야 통신이 되는 반면, UDP는 페어링이 필요없기 때문에 데이터의 유실 가능성이 존재한다.
+
+posix-configs/SITL/init/rcSgazeboiris 파일을 보면 동작 태스크를 알 수 있다.
+
+```
+mavlink start -u 14556 -r 2000000  mavlink start -u 14557 -r 2000000 -m onboard -o 14540  mavlink stream -r 80 -s POSITION_TARGET_LOCAL_NED -u 14556  mavlink stream -r 80 -s LOCAL_POSITION_NED -u 14556  
+```
+
+MAVLink 명령어는 Pixhawk에서 MAVLink 메세지를 수신하고 송신하는 기능을 한다. 데몬 형식으로 계속 수행되는 방식인데, 이 데몬 형식을 수행시키는 것이 “mavlink start”이다. “-u 15446”은 UDP로 통신을 하고 15466번 포트로 MAVLink 데이터를 수신받겠다는 의미이다. 그리고 “-o 14540”은 14540 포트로 MAVLink 데이터를 송신하겠다는 의미이다. “-o” 옵션이 없는 경우는 기본적으로 14540 포트를 쓰겠다는 의미이고, 위에서 mavlink start가 두개가 실행된 것은 수신해야 할 서로 다른 데이터가 2개 있다는 뜻으로 해석할 수 있다. 하나는 지상국 시스템이고 다른 하나는 “-m onboard”를 통해 보았을 때, Companion Board라고 추측해 볼 수 있을 것이다. “mavlink stream”은 외부로부터 MAVLink 스트림 데이터를 수신하겠다는 것으로 이해하면 된다.
+
+## MAVROS wiki
+
+[http://wiki.ros.org/mavros#Subscribed_Topics](http://wiki.ros.org/mavros#Subscribed_Topics)
+
+arm, takeoff, land같은 미션 명령은 service로 전달되고, IMU, GPS 데이터의 경우에는 topic으로 전달된다. (코드를 보며 더 살펴봐야 할 것 같다.)
